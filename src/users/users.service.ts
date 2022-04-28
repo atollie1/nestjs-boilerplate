@@ -43,6 +43,16 @@ export class UsersService {
     return user;
   }
 
+  async findOneByEmail(email: string): Promise<User> {
+    const user = await this.userRepository
+      .createQueryBuilder('users')
+      .addSelect(['users.id', 'users.name', 'users.email', 'users.password'])
+      .where('email = :email', { email })
+      .getOne();
+
+    return user;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
     user.email = updateUserDto.email || user.email;
