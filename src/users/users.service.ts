@@ -7,19 +7,18 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    @InjectRepository(UsersRepository)
+    private usersRepository: UsersRepository,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const user = this.userRepository.create(createUserDto);
-      await this.userRepository.save(user);
+      const user = await this.usersRepository.createUser(createUserDto);
 
       return user;
     } catch (e) {
@@ -28,13 +27,13 @@ export class UsersService {
   }
 
   findAll(): Promise<User[]> {
-    const users = this.userRepository.find();
+    const users = this.usersRepository.find();
 
     return users;
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userRepository.findOne(id);
+    const user = await this.usersRepository.findOne(id);
 
     if (!user) {
       throw new NotFoundException(`Cannot find user with id: ${id}`);
@@ -44,26 +43,19 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const user = await this.userRepository
-      .createQueryBuilder('users')
-      .addSelect(['users.id', 'users.name', 'users.email', 'users.password'])
-      .where('email = :email', { email })
-      .getOne();
+    const user = await this.usersRepository.findOneByEmail(email);
 
     return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
-    user.email = updateUserDto.email || user.email;
-    user.name = updateUserDto.name || user.name;
-    await this.userRepository.save(user);
+    const user = await this.usersRepository.updateUser(id, updateUserDto);
 
     return user;
   }
 
   async remove(id: string) {
     const user = await this.findOne(id);
-    await this.userRepository.remove(user);
+    await this.usersRepository.remove(user);
   }
 }
